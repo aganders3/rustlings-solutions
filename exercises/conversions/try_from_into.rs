@@ -25,19 +25,59 @@ struct Color {
 // Tuple implementation
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = String;
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {}
+    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        let (r, g, b) = tuple;
+        if r < 0 || r > u8::MAX as i16 {
+            return Err(Self::Error::from("Red channel out of bounds"))
+        }
+        if g < 0 || g > u8::MAX as i16{
+            return Err(Self::Error::from("Green channel out of bounds"))
+        }
+        if b < 0 || b > u8::MAX as i16{
+            return Err(Self::Error::from("Blue channel out of bounds"))
+        }
+
+        Ok(Color{
+            red: r as u8,
+            green: g as u8,
+            blue: b as u8
+        })
+    }
 }
 
 // Array implementation
 impl TryFrom<[i16; 3]> for Color {
     type Error = String;
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {}
+    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        for (i, ch) in ["Red", "Green", "Blue"].iter().enumerate() {
+            if arr[i] < 0 || arr[i] > u8::MAX as i16{
+                return Err(Self::Error::from(format!("{} channel out of bounds", ch)));
+            }
+        }
+        Ok(Color{
+            red: arr[0] as u8,
+            green: arr[1] as u8,
+            blue: arr[2] as u8
+        })
+    }
 }
 
 // Slice implementation
 impl TryFrom<&[i16]> for Color {
     type Error = String;
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {}
+    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() != 3 { return Err(Self::Error::from("Slice must have length 3 to be a valid Color")); }
+        for (i, ch) in ["Red", "Green", "Blue"].iter().enumerate() {
+            if slice[i] < 0 || slice[i] > u8::MAX as i16{
+                return Err(Self::Error::from(format!("{} channel out of bounds", ch)));
+            }
+        }
+        Ok(Color{
+            red: slice[0] as u8,
+            green: slice[1] as u8,
+            blue: slice[2] as u8
+        })
+    }
 }
 
 fn main() {
@@ -118,8 +158,7 @@ mod tests {
     fn test_slice_out_of_range_positive() {
         let arr = [10000, 256, 1000];
         assert!(Color::try_from(&arr[..]).is_err());
-    }
-    #[test]
+    } #[test]
     fn test_slice_out_of_range_negative() {
         let arr = [-256, -1, -10];
         assert!(Color::try_from(&arr[..]).is_err());
